@@ -13,10 +13,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
       - name: APK bauen
         run: |
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
+          for i in 1 2 3; do
+            gradle assembleRelease --no-daemon && exit 0
+            echo "Versuch $i fehlgeschlagen – neuer Versuch in 30 s"; sleep 30
+          done
+          exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: FotoSync-APK
