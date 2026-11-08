@@ -33,8 +33,8 @@ class SmbClient(private val s: Settings, profile: Int) : AutoCloseable {
         props.setProperty("jcifs.smb.client.maxVersion", PROFILES[profile])
         props.setProperty("jcifs.resolveOrder", "DNS,BCAST")
         props.setProperty("jcifs.smb.client.connTimeout", "10000")
-        props.setProperty("jcifs.smb.client.responseTimeout", "30000")
-        props.setProperty("jcifs.smb.client.soTimeout", "35000")
+        props.setProperty("jcifs.smb.client.responseTimeout", "120000") // Festplatten an der FRITZ!Box sind bei großen Videos teils langsam
+        props.setProperty("jcifs.smb.client.soTimeout", "180000")
         props.setProperty("jcifs.smb.client.ipcSigningEnforced", "false")
         base = BaseContext(PropertyConfiguration(props))
         ctx = base.withCredentials(NtlmPasswordAuthenticator("", s.user, s.password))
@@ -120,7 +120,7 @@ class SmbClient(private val s: Settings, profile: Int) : AutoCloseable {
         /** Ausführliche Diagnose zum Weitergeben. Nur im Hintergrund-Thread aufrufen. */
         fun diagnose(context: Context, s: Settings): String {
             val sb = StringBuilder()
-            sb.append("App 1.2 · Android ").append(android.os.Build.VERSION.RELEASE)
+            sb.append("App 1.3 · Android ").append(android.os.Build.VERSION.RELEASE)
                 .append(" · ").append(android.os.Build.MODEL).append('\n')
             sb.append("WLAN aktiv: ").append(if (Net.isOnWifi(context)) "ja" else "NEIN").append('\n')
             sb.append("Adresse: ").append(s.host).append('\n')

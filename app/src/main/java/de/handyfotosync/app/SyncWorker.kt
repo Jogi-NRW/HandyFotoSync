@@ -11,6 +11,7 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import jcifs.smb.SmbFileOutputStream
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -115,7 +116,15 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
                 if (i % 5 == 0) updateNotification("Übertrage ${i + 1} von ${todo.size} …")
 
                 try {
-                    when (uploadOne(smb, s, item, knownDirs)) {
+                    val outcome = try {
+                        uploadOne(smb, s, item, knownDirs)
+                    } catch (first: Exception) {
+                        // Einmal kurz warten und erneut versuchen (z. B. Festplatte war zu langsam)
+                        if (isStopped || !Net.isOnWifi(ctx)) throw first
+                        delay(5000)
+                        uploadOne(smb, s, item, knownDirs)
+                    }
+                    when (outcome) {
                         Outcome.UPLOADED -> uploaded++
                         Outcome.ALREADY_THERE -> already++
                     }

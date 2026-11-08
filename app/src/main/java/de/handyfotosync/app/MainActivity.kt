@@ -64,15 +64,14 @@ class MainActivity : AppCompatActivity() {
         // helle Symbole (Uhrzeit, Akku) auf der blauen Leiste
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
         val root = findViewById<View>(R.id.root)
-        val tbPadL = toolbar.paddingLeft
-        val tbPadR = toolbar.paddingRight
+        val appbar = findViewById<View>(R.id.appbar)
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
             val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
             // oben: Titelleiste rutscht unter die Statusleiste
-            toolbar.setPadding(tbPadL + bars.left, bars.top, tbPadR + bars.right, 0)
+            appbar.setPadding(bars.left, bars.top, bars.right, 0)
             // unten: Abstand zu Navigationsleiste bzw. Tastatur
             root.setPadding(bars.left, 0, bars.right, maxOf(bars.bottom, ime.bottom))
             insets
