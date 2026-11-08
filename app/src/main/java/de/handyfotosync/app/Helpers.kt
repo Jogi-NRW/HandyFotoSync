@@ -40,7 +40,6 @@ object Perms {
         if (Build.VERSION.SDK_INT >= 33) {
             list.add(Manifest.permission.READ_MEDIA_IMAGES)
             if (includeVideos) list.add(Manifest.permission.READ_MEDIA_VIDEO)
-            if (Build.VERSION.SDK_INT >= 34) list.add("android.permission.READ_MEDIA_VISUAL_USER_SELECTED")
             list.add(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             list.add(Manifest.permission.READ_EXTERNAL_STORAGE)

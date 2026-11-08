@@ -120,7 +120,7 @@ class SmbClient(private val s: Settings, profile: Int) : AutoCloseable {
         /** Ausführliche Diagnose zum Weitergeben. Nur im Hintergrund-Thread aufrufen. */
         fun diagnose(context: Context, s: Settings): String {
             val sb = StringBuilder()
-            sb.append("App 1.7 · Android ").append(android.os.Build.VERSION.RELEASE)
+            sb.append("App 1.8 · Android ").append(android.os.Build.VERSION.RELEASE)
                 .append(" · ").append(android.os.Build.MODEL).append('\n')
             sb.append("WLAN aktiv: ").append(if (Net.isOnWifi(context)) "ja" else "NEIN").append('\n')
             sb.append("Adresse: ").append(s.host).append('\n')
