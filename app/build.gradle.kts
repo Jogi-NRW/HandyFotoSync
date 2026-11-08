@@ -11,15 +11,24 @@ android {
         applicationId = "de.handyfotosync.app"
         minSdk = 29          // Android 10 oder neuer
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+    }
+
+    // Fester Schlüssel im (privaten) Repository, damit Updates über die alte Version installiert werden können
+    signingConfigs {
+        create("fest") {
+            storeFile = file("fotosync.keystore")
+            storePassword = "fotosync"
+            keyAlias = "fotosync"
+            keyPassword = "fotosync"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Mit dem Debug-Schlüssel signiert, damit die APK ohne eigenen Schlüssel installierbar ist
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("fest")
         }
     }
 

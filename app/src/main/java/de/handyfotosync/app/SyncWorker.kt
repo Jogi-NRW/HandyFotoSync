@@ -84,8 +84,17 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
         var failed = 0
         var lastError = ""
 
-        SmbClient(s).use { smb ->
-            // Zielordner anlegen bzw. Verbindung prüfen
+        val client = try {
+            SmbClient.open(s)
+        } catch (e: Exception) {
+            val msg = SmbClient.friendlyError(e)
+            s.status = "FRITZ!Box nicht erreichbar (${Settings.now()}): $msg"
+            s.log("Verbindung fehlgeschlagen: $msg")
+            return Result.success() // beim nächsten Mal erneut versuchen
+        }
+
+        client.use { smb ->
+            // Zielordner anlegen
             try {
                 val root = smb.dir(s.folder)
                 if (!root.exists()) root.mkdirs()

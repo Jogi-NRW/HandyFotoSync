@@ -49,6 +49,11 @@ class Settings(context: Context) {
     val targetId: String
         get() = "$host|$share|$folder|flach".lowercase(Locale.ROOT)
 
+    /** Zuletzt funktionierende SMB-Variante (Index in SmbClient.PROFILES). */
+    var smbProfile: Int
+        get() = p.getInt("smbProfile", 0).coerceIn(0, SmbClient.PROFILES.size - 1)
+        set(v) = p.edit().putInt("smbProfile", v).apply()
+
     /** Ziel, zu dem die aktuelle Merkliste gehört. */
     var ledgerTarget: String
         get() = p.getString("ledgerTarget", "") ?: ""

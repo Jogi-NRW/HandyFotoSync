@@ -1,5 +1,7 @@
 package de.handyfotosync.app
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -138,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
-                    SmbClient(s).use { smb ->
+                    SmbClient.open(s).use { smb ->
                         smb.dir("").listFiles()
                             .filter { it.isDirectory }
                             .map { it.name.trimEnd('/') }
@@ -177,7 +179,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
-                    SmbClient(s).use { smb ->
+                    SmbClient.open(s).use { smb ->
                         val d = smb.dir(s.folder)
                         if (!d.exists()) d.mkdirs()
                         val t = smb.file(s.folder + "/.verbindungstest.tmp")
@@ -244,7 +246,36 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Verbindung fehlgeschlagen")
             .setMessage(msg)
             .setPositiveButton("OK", null)
+            .setNeutralButton("Technische Details") { _, _ -> showDiagnosis() }
             .show()
+    }
+
+    /** Prüft Adresse, Ports und SMB-Varianten und zeigt das Ergebnis zum Kopieren an. */
+    private fun showDiagnosis() {
+        saveFields()
+        busyText = "Diagnose läuft … (bis zu 30 Sekunden)"
+        refreshStatus()
+        lifecycleScope.launch {
+            val report = withContext(Dispatchers.IO) {
+                try {
+                    SmbClient.diagnose(applicationContext, s)
+                } catch (e: Exception) {
+                    "Diagnose fehlgeschlagen: $e"
+                }
+            }
+            busyText = null
+            refreshStatus()
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("Technische Details")
+                .setMessage(report)
+                .setPositiveButton("Kopieren") { _, _ ->
+                    val cm = getSystemService(ClipboardManager::class.java)
+                    cm?.setPrimaryClip(ClipData.newPlainText("Diagnose", report))
+                    toast("Kopiert – du kannst es jetzt einfügen und weitergeben.")
+                }
+                .setNegativeButton("Schließen", null)
+                .show()
+        }
     }
 
     private fun toast(t: String) = Toast.makeText(this, t, Toast.LENGTH_LONG).show()
