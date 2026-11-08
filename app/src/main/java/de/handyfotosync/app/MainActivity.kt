@@ -14,6 +14,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import jcifs.smb.SmbFileOutputStream
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +56,27 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         s = Settings(this)
+
+        // Android 15+: Inhalte nicht unter Navigationsleiste und Tastatur verschwinden lassen
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        toolbar.title = getString(R.string.app_name)
+        toolbar.setTitleTextColor(0xFFFFFFFF.toInt())
+        // helle Symbole (Uhrzeit, Akku) auf der blauen Leiste
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+        val root = findViewById<View>(R.id.root)
+        val tbPadL = toolbar.paddingLeft
+        val tbPadR = toolbar.paddingRight
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            // oben: Titelleiste rutscht unter die Statusleiste
+            toolbar.setPadding(tbPadL + bars.left, bars.top, tbPadR + bars.right, 0)
+            // unten: Abstand zu Navigationsleiste bzw. Tastatur
+            root.setPadding(bars.left, 0, bars.right, maxOf(bars.bottom, ime.bottom))
+            insets
+        }
 
         etHost = findViewById(R.id.etHost)
         etShare = findViewById(R.id.etShare)
