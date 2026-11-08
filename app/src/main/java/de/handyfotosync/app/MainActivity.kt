@@ -1,104 +1,102 @@
 package de.handyfotosync.app
 
-import android.content.ClipData
-import android.content.ClipboardManager
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
-import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import jcifs.smb.SmbFileOutputStream
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.core.content.ContextCompat
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.progressindicator.LinearProgressIndicator
 
+/** Übersicht: Status, Fortschritt, Schalter, Verlauf und „Jetzt übertragen“. */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var s: Settings
-    private lateinit var etHost: EditText
-    private lateinit var etShare: EditText
-    private lateinit var etUser: EditText
-    private lateinit var etPassword: EditText
-    private lateinit var etFolder: EditText
-    private lateinit var swVideos: SwitchCompat
-    private lateinit var swCamera: SwitchCompat
-    private lateinit var swAuto: SwitchCompat
-    private lateinit var tvPerms: TextView
-    private lateinit var btnPerms: Button
-    private lateinit var tvStatus: TextView
+    private lateinit var chipWifi: TextView
+    private lateinit var tvHost: TextView
+    private lateinit var tvState: TextView
+    private lateinit var tvBig: TextView
+    private lateinit var tvDetail: TextView
+    private lateinit var progress: LinearProgressIndicator
+    private lateinit var statNew: TextView
+    private lateinit var statAlready: TextView
+    private lateinit var statFailed: TextView
+    private lateinit var tvFolder: TextView
     private lateinit var tvLog: TextView
+    private lateinit var permBox: LinearLayout
+    private lateinit var swVideos: MaterialSwitch
+    private lateinit var swCamera: MaterialSwitch
+    private lateinit var swAuto: MaterialSwitch
 
     private var busyText: String? = null
     private val handler = Handler(Looper.getMainLooper())
     private val ticker = object : Runnable {
         override fun run() {
-            refreshStatus()
-            handler.postDelayed(this, 1500)
+            refresh()
+            handler.postDelayed(this, 1000)
         }
     }
 
     private val permLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { refreshPerms() }
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { refresh() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         s = Settings(this)
 
-        // Android 15+: Inhalte nicht unter Navigationsleiste und Tastatur verschwinden lassen
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        toolbar.title = getString(R.string.app_name)
-        toolbar.setTitleTextColor(0xFFFFFFFF.toInt())
-        // helle Symbole (Uhrzeit, Akku) auf der blauen Leiste
-        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
-        val root = findViewById<View>(R.id.root)
-        val appbar = findViewById<View>(R.id.appbar)
-        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
-            val bars = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            // oben: Titelleiste rutscht unter die Statusleiste
-            appbar.setPadding(bars.left, bars.top, bars.right, 0)
-            // unten: Abstand zu Navigationsleiste bzw. Tastatur
-            root.setPadding(bars.left, 0, bars.right, maxOf(bars.bottom, ime.bottom))
-            insets
-        }
+        Ui.applyInsets(
+            this, findViewById(R.id.screen), findViewById(R.id.appbar),
+            findViewById(R.id.scroll), findViewById(R.id.bottomBar)
+        )
 
-        etHost = findViewById(R.id.etHost)
-        etShare = findViewById(R.id.etShare)
-        etUser = findViewById(R.id.etUser)
-        etPassword = findViewById(R.id.etPassword)
-        etFolder = findViewById(R.id.etFolder)
+        chipWifi = findViewById(R.id.chipWifi)
+        tvHost = findViewById(R.id.tvHost)
+        tvState = findViewById(R.id.tvState)
+        tvBig = findViewById(R.id.tvBig)
+        tvDetail = findViewById(R.id.tvDetail)
+        progress = findViewById(R.id.progress)
+        statNew = findViewById(R.id.statNew)
+        statAlready = findViewById(R.id.statAlready)
+        statFailed = findViewById(R.id.statFailed)
+        tvFolder = findViewById(R.id.tvFolder)
+        tvLog = findViewById(R.id.tvLog)
+        permBox = findViewById(R.id.permBox)
         swVideos = findViewById(R.id.swVideos)
         swCamera = findViewById(R.id.swCamera)
         swAuto = findViewById(R.id.swAuto)
-        tvPerms = findViewById(R.id.tvPerms)
-        btnPerms = findViewById(R.id.btnPerms)
-        tvStatus = findViewById(R.id.tvStatus)
-        tvLog = findViewById(R.id.tvLog)
 
-        etHost.setText(s.host)
-        etShare.setText(s.share)
-        etUser.setText(s.user)
-        etPassword.setText(s.password)
-        etFolder.setText(s.folder)
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_setup -> {
+                    startActivity(Intent(this, SetupActivity::class.java)); true
+                }
+                R.id.action_diag -> {
+                    Ui.showDiagnosis(this, s) { busyText = it; refresh() }; true
+                }
+                R.id.action_reset -> {
+                    confirmReset(); true
+                }
+                else -> false
+            }
+        }
+
         swVideos.isChecked = s.includeVideos
         swCamera.isChecked = s.onlyCamera
         swAuto.isChecked = s.autoSync
-
         swVideos.setOnCheckedChangeListener { _, on ->
             s.includeVideos = on
             if (on) requestPerms()
@@ -109,147 +107,96 @@ class MainActivity : AppCompatActivity() {
             Scheduler.apply(this, on && s.isConfigured)
         }
 
-        findViewById<Button>(R.id.btnDrives).setOnClickListener { saveFields(); chooseDrive() }
-        findViewById<Button>(R.id.btnTest).setOnClickListener { saveFields(); testConnection() }
-        btnPerms.setOnClickListener { requestPerms() }
-        findViewById<Button>(R.id.btnSync).setOnClickListener { syncNow() }
-        findViewById<Button>(R.id.btnReset).setOnClickListener { confirmReset() }
+        findViewById<MaterialButton>(R.id.btnPerms).setOnClickListener { requestPerms() }
+        findViewById<MaterialButton>(R.id.btnSync).setOnClickListener { syncNow() }
 
         if (Perms.missing(this, s.includeVideos).isNotEmpty()) requestPerms()
         if (s.autoSync && s.isConfigured) Scheduler.apply(this, true)
+        if (!s.isConfigured && savedInstanceState == null) {
+            startActivity(Intent(this, SetupActivity::class.java))
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        refreshPerms()
         handler.post(ticker)
     }
 
     override fun onPause() {
         super.onPause()
-        saveFields()
         handler.removeCallbacks(ticker)
-    }
-
-    private fun saveFields() {
-        s.host = etHost.text.toString().ifBlank { "fritz.box" }
-        s.share = etShare.text.toString().ifBlank { "FRITZ.NAS" }
-        s.user = etUser.text.toString()
-        s.password = etPassword.text.toString()
-        s.folder = etFolder.text.toString()
     }
 
     private fun requestPerms() = permLauncher.launch(Perms.needed(s.includeVideos))
 
-    private fun refreshPerms() {
-        val missingMedia = !Perms.hasMedia(this)
-        tvPerms.visibility = if (missingMedia) View.VISIBLE else View.GONE
-        btnPerms.visibility = if (missingMedia) View.VISIBLE else View.GONE
-        if (missingMedia) {
-            tvPerms.text = "Die App darf noch nicht auf deine Fotos zugreifen. " +
-                "Bitte „Alle erlauben“ wählen (nicht nur ausgewählte Fotos)."
+    private fun refresh() {
+        // WLAN-Anzeige
+        val wifi = Net.isOnWifi(this)
+        chipWifi.text = if (wifi) "WLAN verbunden" else "Kein WLAN"
+        val chipColor = ContextCompat.getColor(this, if (wifi) R.color.green else R.color.orange)
+        chipWifi.setTextColor(chipColor)
+        chipWifi.setBackgroundResource(if (wifi) R.drawable.bg_chip_ok else R.drawable.bg_chip_warn)
+        chipWifi.compoundDrawablesRelative[0]?.setTint(chipColor)
+        tvHost.text = s.host
+
+        // Status
+        if (busyText != null) {
+            tvState.text = "Bitte warten"
+            tvBig.text = busyText
+            tvDetail.visibility = View.GONE
+            progress.visibility = View.GONE
+        } else if (s.running && s.total > 0) {
+            tvState.text = "Übertragung läuft"
+            val big = SpannableStringBuilder("${s.done}")
+            val start = big.length
+            big.append(" von ${s.total}")
+            big.setSpan(RelativeSizeSpan(0.62f), start, big.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            big.setSpan(
+                ForegroundColorSpan(ContextCompat.getColor(this, R.color.grey)),
+                start, big.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            tvBig.text = big
+            tvDetail.visibility = View.GONE
+            progress.visibility = View.VISIBLE
+            progress.setProgressCompat(s.done * 100 / s.total, true)
+        } else {
+            tvState.text = if (s.lastRun.isNotEmpty()) "Letzter Lauf · ${s.lastRun}" else "Noch keine Übertragung"
+            tvBig.text = s.headline.ifEmpty { if (s.isConfigured) "Bereit" else "Noch nicht eingerichtet" }
+            val detail = if (s.headline.isEmpty()) "" else s.status
+            tvDetail.text = detail
+            tvDetail.visibility = if (detail.isEmpty()) View.GONE else View.VISIBLE
+            progress.visibility = View.GONE
         }
-    }
+        statNew.text = s.cntNew.toString()
+        statAlready.text = s.cntAlready.toString()
+        statFailed.text = s.cntFailed.toString()
+        tvFolder.text = s.folder.ifEmpty { "Kein Zielordner – oben rechts auf Einrichtung tippen" }
 
-    private fun refreshStatus() {
-        tvStatus.text = busyText ?: s.status
-        tvLog.text = s.log
-    }
+        // Verlauf: die letzten Einträge
+        val lines = s.log.lines().filter { it.isNotBlank() }.take(6)
+        tvLog.text = if (lines.isEmpty()) "Noch keine Einträge." else lines.joinToString("\n")
 
-    // ---------- Festplatte auf der FRITZ!Box auswählen ----------
-
-    private fun chooseDrive() {
-        busyText = "Verbinde mit ${s.host} …"
-        refreshStatus()
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                runCatching {
-                    SmbClient.open(s).use { smb ->
-                        smb.dir("").listFiles()
-                            .filter { it.isDirectory }
-                            .map { it.name.trimEnd('/') }
-                            .filter { !it.startsWith(".") }
-                    }
-                }
-            }
-            busyText = null
-            result.onSuccess { names ->
-                if (names.isEmpty()) {
-                    toast("Keine Festplatte gefunden – ist sie an der FRITZ!Box angeschlossen?")
-                } else {
-                    AlertDialog.Builder(this@MainActivity)
-                        .setTitle("Auf welcher Festplatte speichern?")
-                        .setItems(names.toTypedArray()) { _, i ->
-                            etFolder.setText("${names[i]}/Handy-Fotos-Videos")
-                            saveFields()
-                            testConnection()
-                        }
-                        .show()
-                }
-            }.onFailure { showError(it) }
-            refreshStatus()
-        }
-    }
-
-    // ---------- Verbindung testen (inkl. Schreibrecht) ----------
-
-    private fun testConnection() {
-        if (!s.isConfigured) {
-            toast("Bitte Benutzer, Kennwort und Zielordner ausfüllen.")
-            return
-        }
-        busyText = "Teste Verbindung …"
-        refreshStatus()
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                runCatching {
-                    SmbClient.open(s).use { smb ->
-                        val d = smb.dir(s.folder)
-                        if (!d.exists()) d.mkdirs()
-                        val t = smb.file(s.folder + "/.verbindungstest.tmp")
-                        SmbFileOutputStream(t).use { it.write("ok".toByteArray()) }
-                        t.delete()
-                    }
-                }
-            }
-            busyText = null
-            result.onSuccess {
-                s.status = "✔ Verbindung OK – Ordner „${s.folder}“ ist bereit (${Settings.now()})."
-                if (s.autoSync) Scheduler.apply(this@MainActivity, true)
-                AlertDialog.Builder(this@MainActivity)
-                    .setTitle("Alles bereit")
-                    .setMessage(
-                        "Der Ordner „${s.folder}“ auf der FRITZ!Box ist beschreibbar.\n\n" +
-                            "Jetzt alle vorhandenen Fotos übertragen? (Beim ersten Mal kann das je nach Menge länger dauern.)"
-                    )
-                    .setPositiveButton("Jetzt übertragen") { _, _ -> syncNow() }
-                    .setNegativeButton("Später", null)
-                    .show()
-            }.onFailure { showError(it) }
-            refreshStatus()
-        }
+        permBox.visibility = if (Perms.hasMedia(this)) View.GONE else View.VISIBLE
     }
 
     private fun syncNow() {
-        saveFields()
         when {
-            !s.isConfigured -> toast("Bitte zuerst die Verbindung einrichten.")
+            !s.isConfigured -> startActivity(Intent(this, SetupActivity::class.java))
             !Perms.hasMedia(this) -> requestPerms()
             !Net.isOnWifi(this) -> {
                 Scheduler.syncNow(this) // wartet automatisch auf WLAN
-                toast("Kein WLAN – die Übertragung startet automatisch, sobald du im WLAN bist.")
+                Ui.toast(this, "Kein WLAN – die Übertragung startet automatisch, sobald du im WLAN bist.")
             }
             else -> {
                 Scheduler.syncNow(this)
-                s.status = "Übertragung wird gestartet …"
-                toast("Übertragung gestartet")
+                Ui.toast(this, "Übertragung gestartet")
             }
         }
-        refreshStatus()
+        refresh()
     }
 
     private fun confirmReset() {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Merkliste zurücksetzen?")
             .setMessage(
                 "Die App prüft dann beim nächsten Durchlauf wieder alle Fotos gegen die Festplatte. " +
@@ -257,50 +204,9 @@ class MainActivity : AppCompatActivity() {
             )
             .setPositiveButton("Zurücksetzen") { _, _ ->
                 Ledger(this).clear()
-                toast("Merkliste gelöscht")
+                Ui.toast(this, "Merkliste gelöscht")
             }
             .setNegativeButton("Abbrechen", null)
             .show()
     }
-
-    private fun showError(e: Throwable) {
-        val msg = SmbClient.friendlyError(e)
-        s.status = "✖ $msg"
-        AlertDialog.Builder(this)
-            .setTitle("Verbindung fehlgeschlagen")
-            .setMessage(msg)
-            .setPositiveButton("OK", null)
-            .setNeutralButton("Technische Details") { _, _ -> showDiagnosis() }
-            .show()
-    }
-
-    /** Prüft Adresse, Ports und SMB-Varianten und zeigt das Ergebnis zum Kopieren an. */
-    private fun showDiagnosis() {
-        saveFields()
-        busyText = "Diagnose läuft … (bis zu 30 Sekunden)"
-        refreshStatus()
-        lifecycleScope.launch {
-            val report = withContext(Dispatchers.IO) {
-                try {
-                    SmbClient.diagnose(applicationContext, s)
-                } catch (e: Exception) {
-                    "Diagnose fehlgeschlagen: $e"
-                }
-            }
-            busyText = null
-            refreshStatus()
-            AlertDialog.Builder(this@MainActivity)
-                .setTitle("Technische Details")
-                .setMessage(report)
-                .setPositiveButton("Kopieren") { _, _ ->
-                    val cm = getSystemService(ClipboardManager::class.java)
-                    cm?.setPrimaryClip(ClipData.newPlainText("Diagnose", report))
-                    toast("Kopiert – du kannst es jetzt einfügen und weitergeben.")
-                }
-                .setNegativeButton("Schließen", null)
-                .show()
-        }
-    }
-
-    private fun toast(t: String) = Toast.makeText(this, t, Toast.LENGTH_LONG).show()
 }

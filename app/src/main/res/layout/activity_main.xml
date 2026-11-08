@@ -1,162 +1,256 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/screen"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg"
     android:orientation="vertical">
 
-    <!-- Eigene Titelleiste: beginnt hinter der Statusleiste, Text sitzt darunter -->
     <LinearLayout
         android:id="@+id/appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#1565C0"
-        android:elevation="4dp">
+        android:background="@color/blue"
+        android:elevation="4dp"
+        android:orientation="vertical">
 
-        <androidx.appcompat.widget.Toolbar
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="56dp" />
+            android:layout_height="56dp"
+            android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+            app:menu="@menu/main"
+            app:navigationIcon="@drawable/ic_photo"
+            app:title="@string/app_name"
+            app:titleTextColor="#FFFFFF" />
     </LinearLayout>
 
-<ScrollView
-    android:id="@+id/root"
-    android:clipToPadding="false"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1"
-    android:fillViewport="true">
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Status-Karte -->
+            <LinearLayout
+                style="@style/Card"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/chipWifi"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_chip_ok"
+                        android:drawablePadding="6dp"
+                        android:gravity="center_vertical"
+                        android:paddingStart="10dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp"
+                        android:text="WLAN verbunden"
+                        android:textColor="@color/green"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_wifi"
+                        app:drawableTint="@color/green" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvHost"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/grey"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:textColor="@color/grey"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvBig"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/text"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/grey"
+                    android:textIsSelectable="true"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/progress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    app:indicatorColor="@color/blue"
+                    app:trackColor="@color/track"
+                    app:trackCornerRadius="5dp"
+                    app:trackThickness="10dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout style="@style/StatBox">
+                        <TextView android:id="@+id/statNew" style="@style/StatNumber" android:text="0" />
+                        <TextView style="@style/StatLabel" android:text="neu kopiert" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/StatBox"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp">
+                        <TextView android:id="@+id/statAlready" style="@style/StatNumber" android:text="0" />
+                        <TextView style="@style/StatLabel" android:text="schon da" />
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/StatBox">
+                        <TextView android:id="@+id/statFailed" style="@style/StatNumber" android:text="0" />
+                        <TextView style="@style/StatLabel" android:text="Fehler" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvFolder"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:drawablePadding="6dp"
+                    android:gravity="center_vertical"
+                    android:textColor="@color/grey"
+                    android:textSize="13sp"
+                    app:drawableStartCompat="@drawable/ic_folder"
+                    app:drawableTint="@color/grey" />
+            </LinearLayout>
+
+            <!-- Hinweis Berechtigung -->
+            <LinearLayout
+                android:id="@+id/permBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_info"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Die App darf noch nicht auf deine Fotos zugreifen. Bitte „Alle erlauben“ wählen, nicht nur ausgewählte Fotos."
+                    android:textColor="@color/blue_text"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPerms"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Berechtigungen erteilen" />
+            </LinearLayout>
+
+            <!-- Schalter -->
+            <LinearLayout
+                style="@style/Card"
+                android:layout_marginTop="14dp"
+                android:paddingStart="18dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="4dp">
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swVideos"
+                    style="@style/SwitchRow"
+                    android:text="Videos auch übertragen" />
+
+                <View style="@style/Divider" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swCamera"
+                    style="@style/SwitchRow"
+                    android:text="Nur Kamera-Fotos" />
+
+                <View style="@style/Divider" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swAuto"
+                    style="@style/SwitchRow"
+                    android:text="Automatisch im WLAN" />
+            </LinearLayout>
+
+            <!-- Verlauf -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:letterSpacing="0.06"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="VERLAUF"
+                android:textColor="@color/grey"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingExtra="4dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:textColor="@color/text2"
+                android:textIsSelectable="true"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
+        android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:background="@color/bg"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
 
-        <TextView
-            style="@style/Heading"
-            android:text="FRITZ!Box-Verbindung" />
-
-        <TextView style="@style/Label" android:text="Adresse der FRITZ!Box" />
-        <EditText
-            android:id="@+id/etHost"
-            style="@style/Field"
-            android:hint="fritz.box"
-            android:inputType="textUri" />
-
-        <TextView style="@style/Label" android:text="Freigabename (Standard: FRITZ.NAS)" />
-        <EditText
-            android:id="@+id/etShare"
-            style="@style/Field"
-            android:hint="FRITZ.NAS"
-            android:inputType="text" />
-
-        <TextView style="@style/Label" android:text="FRITZ!Box-Benutzer" />
-        <EditText
-            android:id="@+id/etUser"
-            style="@style/Field"
-            android:hint="z. B. handy"
-            android:inputType="text" />
-
-        <TextView style="@style/Label" android:text="Kennwort" />
-        <EditText
-            android:id="@+id/etPassword"
-            style="@style/Field"
-            android:inputType="textPassword" />
-
-        <TextView style="@style/Label" android:text="Zielordner auf der Festplatte" />
-        <EditText
-            android:id="@+id/etFolder"
-            style="@style/Field"
-            android:hint="z. B. Intenso-01/Handy-Fotos-Videos"
-            android:inputType="text" />
-
-        <Button
-            android:id="@+id/btnDrives"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Festplatte auswählen …" />
-
-        <Button
-            android:id="@+id/btnTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Speichern &amp; Verbindung testen" />
-
-        <TextView
-            style="@style/Heading"
-            android:layout_marginTop="24dp"
-            android:text="Was soll übertragen werden?" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/swVideos"
-            style="@style/SwitchRow"
-            android:text="Videos auch übertragen" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/swCamera"
-            style="@style/SwitchRow"
-            android:text="Nur Kamera-Fotos (ohne Screenshots, WhatsApp usw.)" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/swAuto"
-            style="@style/SwitchRow"
-            android:text="Automatisch übertragen, sobald ich im WLAN bin" />
-
-        <TextView
-            android:id="@+id/tvPerms"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="#C62828"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/btnPerms"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Berechtigungen erteilen"
-            android:visibility="gone" />
-
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSync"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            style="@style/BigButton"
             android:text="Jetzt übertragen" />
-
-        <TextView
-            style="@style/Heading"
-            android:layout_marginTop="24dp"
-            android:text="Status" />
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textIsSelectable="true"
-            android:textSize="15sp" />
-
-        <TextView
-            android:id="@+id/tvLog"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:fontFamily="monospace"
-            android:textIsSelectable="true"
-            android:textSize="12sp" />
-
-        <Button
-            android:id="@+id/btnReset"
-            style="@style/Widget.AppCompat.Button.Borderless"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="24dp"
-            android:text="Merkliste zurücksetzen" />
     </LinearLayout>
-</ScrollView>
 </LinearLayout>

@@ -11,8 +11,8 @@ android {
         applicationId = "de.handyfotosync.app"
         minSdk = 29          // Android 10 oder neuer
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
     }
 
     // Fester Schlüssel im (privaten) Repository, damit Updates über die alte Version installiert werden können
@@ -55,6 +55,7 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     // SMB2/SMB3-Client für die FRITZ!NAS-Freigabe

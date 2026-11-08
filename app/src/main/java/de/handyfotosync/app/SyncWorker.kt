@@ -52,15 +52,15 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
         val s = Settings(ctx)
 
         if (!s.isConfigured) {
-            s.status = "Noch nicht eingerichtet – bitte App öffnen."
+            s.report("Noch nicht eingerichtet", "Bitte die App öffnen und einrichten.")
             return Result.success()
         }
         if (!Net.isOnWifi(ctx)) {
-            s.status = "Kein WLAN – Übertragung übersprungen (${Settings.now()})."
+            s.report("Kein WLAN", "Übertragung übersprungen – wird im WLAN nachgeholt.")
             return Result.success()
         }
         if (!Perms.hasMedia(ctx)) {
-            s.status = "Keine Berechtigung für Fotos – bitte App öffnen und erlauben."
+            s.report("Keine Foto-Berechtigung", "Bitte die App öffnen und den Zugriff auf alle Fotos erlauben.")
             return Result.success()
         }
 
@@ -76,7 +76,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
         val items = MediaScanner.scan(ctx, s.includeVideos, s.onlyCamera)
         val todo = items.filter { !ledger.contains(it.key) }
         if (todo.isEmpty()) {
-            s.status = "Alles aktuell – ${items.size} Dateien geprüft (${Settings.now()})."
+            s.report("Alles aktuell", "${items.size} Dateien geprüft.")
             return Result.success()
         }
 
@@ -89,7 +89,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
             SmbClient.open(s)
         } catch (e: Exception) {
             val msg = SmbClient.friendlyError(e)
-            s.status = "FRITZ!Box nicht erreichbar (${Settings.now()}): $msg"
+            s.report("FRITZ!Box nicht erreichbar", msg)
             s.log("Verbindung fehlgeschlagen: $msg")
             return Result.success() // beim nächsten Mal erneut versuchen
         }
@@ -101,12 +101,14 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
                 if (!root.exists()) root.mkdirs()
             } catch (e: Exception) {
                 val msg = SmbClient.friendlyError(e)
-                s.status = "FRITZ!Box nicht erreichbar (${Settings.now()}): $msg"
+                s.report("FRITZ!Box nicht erreichbar", msg)
                 s.log("Verbindung fehlgeschlagen: $msg")
                 return Result.success() // beim nächsten Mal erneut versuchen
             }
 
             val knownDirs = HashSet<String>()
+            s.startProgress(todo.size)
+            try {
             for ((i, item) in todo.withIndex()) {
                 if (isStopped) break
                 if (!Net.isOnWifi(ctx)) {
@@ -135,13 +137,18 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
                     s.log("Fehler bei ${item.name}: $lastError")
                     if (failed >= 5 && uploaded == 0 && already == 0) break // vermutlich grundsätzliches Problem
                 }
-                s.status = "Übertrage … ${i + 1}/${todo.size}  (neu: $uploaded, schon vorhanden: $already, Fehler: $failed)"
+                s.setProgress(i + 1, uploaded, already, failed)
+            }
+            } finally {
+                s.running = false
             }
         }
 
-        val summary = "neu übertragen: $uploaded, schon vorhanden: $already, Fehler: $failed"
-        s.status = "Fertig (${Settings.now()}) – $summary" +
-            if (failed > 0) "\nLetzter Fehler: $lastError" else ""
+        val summary = "$uploaded neu, $already schon da, $failed Fehler"
+        s.report(
+            if (failed > 0) "Fertig mit $failed Fehler" + (if (failed == 1) "" else "n") else "Fertig",
+            if (failed > 0) "Letzter Fehler: $lastError\nFehlgeschlagene Dateien werden beim nächsten Mal erneut versucht." else "$uploaded neu übertragen."
+        )
         if (uploaded > 0 || failed > 0) s.log(summary)
         return Result.success()
     }

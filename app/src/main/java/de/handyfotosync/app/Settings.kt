@@ -59,6 +59,41 @@ class Settings(context: Context) {
         get() = p.getString("ledgerTarget", "") ?: ""
         set(v) = p.edit().putString("ledgerTarget", v).apply()
 
+    // ---------- Anzeige auf der Übersicht ----------
+    var headline: String
+        get() = p.getString("headline", "") ?: ""
+        set(v) = p.edit().putString("headline", v).apply()
+
+    var lastRun: String
+        get() = p.getString("lastRun", "") ?: ""
+        set(v) = p.edit().putString("lastRun", v).apply()
+
+    var running: Boolean
+        get() = p.getBoolean("running", false)
+        set(v) = p.edit().putBoolean("running", v).apply()
+
+    val done: Int get() = p.getInt("done", 0)
+    val total: Int get() = p.getInt("total", 0)
+    val cntNew: Int get() = p.getInt("cntNew", 0)
+    val cntAlready: Int get() = p.getInt("cntAlready", 0)
+    val cntFailed: Int get() = p.getInt("cntFailed", 0)
+
+    fun startProgress(total: Int) {
+        p.edit().putBoolean("running", true).putInt("total", total).putInt("done", 0)
+            .putInt("cntNew", 0).putInt("cntAlready", 0).putInt("cntFailed", 0).apply()
+    }
+
+    fun setProgress(done: Int, new: Int, already: Int, failed: Int) {
+        p.edit().putInt("done", done).putInt("cntNew", new)
+            .putInt("cntAlready", already).putInt("cntFailed", failed).apply()
+    }
+
+    /** Ergebnis eines Laufs: kurze Überschrift + Erklärung. */
+    fun report(headline: String, detail: String) {
+        p.edit().putString("headline", headline).putString("status", detail)
+            .putString("lastRun", now()).apply()
+    }
+
     var status: String
         get() = p.getString("status", "Noch keine Übertragung.") ?: ""
         set(v) = p.edit().putString("status", v).apply()

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="blue">#1565C0</color>
+    <color name="blue_dark">#0D47A1</color>
+    <color name="blue_soft">#E8F0FB</color>
+    <color name="blue_text">#0D3A80</color>
+    <color name="bg">#F4F6FA</color>
+    <color name="text">#1B1F27</color>
+    <color name="text2">#3C4043</color>
+    <color name="grey">#5F6368</color>
+    <color name="line">#EDF0F5</color>
+    <color name="field_line">#D5DAE3</color>
+    <color name="track">#E3E8F1</color>
+    <color name="green">#1E6B34</color>
+    <color name="green_soft">#E6F4EA</color>
+    <color name="orange">#B45309</color>
+    <color name="orange_soft">#FDF1E3</color>
+</resources>

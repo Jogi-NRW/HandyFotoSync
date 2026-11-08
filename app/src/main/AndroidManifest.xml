@@ -33,6 +33,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".SetupActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- WorkManager darf längere Übertragungen als Vordergrunddienst ausführen -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
