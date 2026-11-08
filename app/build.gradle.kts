@@ -11,8 +11,8 @@ android {
         applicationId = "de.handyfotosync.app"
         minSdk = 29          // Android 10 oder neuer
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.5"
     }
 
     // Fester Schlüssel im (privaten) Repository, damit Updates über die alte Version installiert werden können

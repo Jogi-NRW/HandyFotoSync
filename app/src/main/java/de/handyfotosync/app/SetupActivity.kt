@@ -9,8 +9,11 @@ import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -129,6 +132,12 @@ class SetupActivity : AppCompatActivity() {
         view.findViewById<TextView>(R.id.tvLogin).text = "Anmeldung als „${s.user}“ erfolgreich"
 
         val list = view.findViewById<LinearLayout>(R.id.driveList)
+        val previousFolder = etFolder.text.toString()
+        fun apply(i: Int) {
+            // Ordner sofort übernehmen – nicht erst beim Knopf „Auswählen“
+            etFolder.setText("${drives[i].name}/Handy-Fotos-Videos")
+            saveFields()
+        }
         val current = s.folder.substringBefore('/')
         var selected = drives.indexOfFirst { it.name == current }.let { if (it < 0) 0 else it }
         val rows = ArrayList<LinearLayout>()
@@ -147,20 +156,34 @@ class SetupActivity : AppCompatActivity() {
             row.findViewById<TextView>(R.id.tvDriveName).text = d.name
             row.findViewById<TextView>(R.id.tvDriveInfo).text =
                 if (d.free >= 0) "Speicher · ${Ui.formatBytes(d.free)} frei" else "Speicher an der FRITZ!Box"
-            row.setOnClickListener { selected = i; render() }
+            row.setOnClickListener { selected = i; render(); apply(i) }
             list.addView(row)
             rows.add(row)
         }
         render()
 
-        view.findViewById<MaterialButton>(R.id.btnCancel).setOnClickListener { sheet.dismiss() }
-        view.findViewById<MaterialButton>(R.id.btnChoose).setOnClickListener {
-            etFolder.setText("${drives[selected].name}/Handy-Fotos-Videos")
+        view.findViewById<MaterialButton>(R.id.btnCancel).setOnClickListener {
+            etFolder.setText(previousFolder)
             saveFields()
+            sheet.dismiss()
+        }
+        view.findViewById<MaterialButton>(R.id.btnChoose).setOnClickListener {
+            apply(selected)
             sheet.dismiss()
             testConnection()
         }
         sheet.setContentView(view)
+
+        // Immer ganz aufklappen und Abstand zur Navigationsleiste halten
+        val basePad = view.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val nav = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, basePad + nav.bottom)
+            insets
+        }
+        sheet.behavior.skipCollapsed = true
+        sheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        sheet.setOnShowListener { sheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED }
         sheet.show()
     }
 
