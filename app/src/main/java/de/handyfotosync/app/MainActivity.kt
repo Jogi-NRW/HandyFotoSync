@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvFolder: TextView
     private lateinit var tvLog: TextView
     private lateinit var permBox: LinearLayout
+    private lateinit var tvPerm: TextView
+    private lateinit var btnPerms: MaterialButton
     private lateinit var swVideos: MaterialSwitch
     private lateinit var swCamera: MaterialSwitch
     private lateinit var swAuto: MaterialSwitch
@@ -74,6 +76,8 @@ class MainActivity : AppCompatActivity() {
         tvFolder = findViewById(R.id.tvFolder)
         tvLog = findViewById(R.id.tvLog)
         permBox = findViewById(R.id.permBox)
+        tvPerm = findViewById(R.id.tvPerm)
+        btnPerms = findViewById(R.id.btnPerms)
         swVideos = findViewById(R.id.swVideos)
         swCamera = findViewById(R.id.swCamera)
         swAuto = findViewById(R.id.swAuto)
@@ -107,7 +111,9 @@ class MainActivity : AppCompatActivity() {
             Scheduler.apply(this, on && s.isConfigured)
         }
 
-        findViewById<MaterialButton>(R.id.btnPerms).setOnClickListener { requestPerms() }
+        findViewById<MaterialButton>(R.id.btnPerms).setOnClickListener {
+            if (Perms.hasOnlyPartialMedia(this)) openAppSettings() else requestPerms()
+        }
         findViewById<MaterialButton>(R.id.btnSync).setOnClickListener { syncNow() }
 
         if (Perms.missing(this, s.includeVideos).isNotEmpty()) requestPerms()
@@ -128,6 +134,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestPerms() = permLauncher.launch(Perms.needed(s.includeVideos))
+
+    private fun openAppSettings() {
+        startActivity(
+            Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(android.net.Uri.fromParts("package", packageName, null))
+        )
+    }
 
     private fun refresh() {
         // WLAN-Anzeige
@@ -177,11 +190,20 @@ class MainActivity : AppCompatActivity() {
         tvLog.text = if (lines.isEmpty()) "Noch keine Einträge." else lines.joinToString("\n")
 
         permBox.visibility = if (Perms.hasMedia(this)) View.GONE else View.VISIBLE
+        if (Perms.hasOnlyPartialMedia(this)) {
+            tvPerm.text = "Die App darf nur auf ausgewählte Fotos zugreifen. Damit alle Fotos gesichert werden: " +
+                "Berechtigungen → Fotos und Videos → „Immer alle erlauben“."
+            btnPerms.text = "Einstellungen öffnen"
+        } else {
+            tvPerm.text = "Die App darf noch nicht auf deine Fotos zugreifen. Bitte „Alle erlauben“ wählen."
+            btnPerms.text = "Berechtigungen erteilen"
+        }
     }
 
     private fun syncNow() {
         when {
             !s.isConfigured -> startActivity(Intent(this, SetupActivity::class.java))
+            Perms.hasOnlyPartialMedia(this) -> openAppSettings()
             !Perms.hasMedia(this) -> requestPerms()
             !Net.isOnWifi(this) -> {
                 Scheduler.syncNow(this) // wartet automatisch auf WLAN

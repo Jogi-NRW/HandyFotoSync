@@ -168,6 +168,7 @@
                 android:visibility="gone">
 
                 <TextView
+                    android:id="@+id/tvPerm"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Die App darf noch nicht auf deine Fotos zugreifen. Bitte „Alle erlauben“ wählen, nicht nur ausgewählte Fotos."

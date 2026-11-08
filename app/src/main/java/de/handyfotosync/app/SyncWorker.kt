@@ -60,7 +60,7 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
             return Result.success()
         }
         if (!Perms.hasMedia(ctx)) {
-            s.report("Keine Foto-Berechtigung", "Bitte die App öffnen und den Zugriff auf alle Fotos erlauben.")
+            s.report("Keine Foto-Berechtigung", PERM_HINT)
             return Result.success()
         }
 
@@ -74,6 +74,10 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
         }
 
         val items = MediaScanner.scan(ctx, s.includeVideos, s.onlyCamera)
+        if (items.isEmpty()) {
+            s.report("Keine Fotos gefunden", "Die App sieht keine Fotos auf dem Handy. $PERM_HINT")
+            return Result.success()
+        }
         val todo = items.filter { !ledger.contains(it.key) }
         if (todo.isEmpty()) {
             s.report("Alles aktuell", "${items.size} Dateien geprüft.")
@@ -249,5 +253,6 @@ class SyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
         private val lock = Mutex()
         private const val CHANNEL = "sync"
         private const val NOTIF_ID = 4711
+        const val PERM_HINT = "Einstellungen → Apps → Fotos → FRITZ!NAS → Berechtigungen → Fotos und Videos → „Immer alle erlauben“."
     }
 }
