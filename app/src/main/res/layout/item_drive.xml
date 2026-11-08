@@ -21,6 +21,7 @@
         android:background="@drawable/bg_icon_box">
 
         <ImageView
+            android:id="@+id/ivDriveIcon"
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:layout_gravity="center"

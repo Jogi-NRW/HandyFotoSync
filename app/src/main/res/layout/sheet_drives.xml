@@ -12,7 +12,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Auf welcher Festplatte speichern?"
+        android:text="Wo soll der Ordner angelegt werden?"
         android:textColor="@color/text"
         android:textSize="22sp"
         android:textStyle="bold" />
@@ -26,12 +26,20 @@
         android:textColor="@color/grey"
         android:textSize="14sp" />
 
-    <LinearLayout
-        android:id="@+id/driveList"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/listScroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:orientation="vertical" />
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:id="@+id/driveList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </androidx.core.widget.NestedScrollView>
 
     <TextView
         android:id="@+id/tvLogin"

@@ -2,6 +2,8 @@ package de.handyfotosync.app
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
+import android.widget.ImageView
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -10,6 +12,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.widget.NestedScrollView
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
@@ -25,6 +28,10 @@ import kotlinx.coroutines.withContext
 class SetupActivity : AppCompatActivity() {
 
     private data class Drive(val name: String, val free: Long)
+
+    companion object {
+        private const val TARGET = "Handy-Fotos-Videos"
+    }
 
     private lateinit var s: Settings
     private lateinit var etHost: EditText
@@ -113,34 +120,50 @@ class SetupActivity : AppCompatActivity() {
             }
             setBusy(null)
             result.onSuccess { drives ->
-                if (drives.isEmpty()) {
-                    Ui.toast(this@SetupActivity, "Keine Festplatte gefunden – ist sie an der FRITZ!Box angeschlossen?")
-                } else {
-                    showDriveSheet(drives)
-                }
+                showDriveSheet(drives)
             }.onFailure { e ->
                 Ui.showError(this@SetupActivity, s, e) { setBusy(it) }
             }
         }
     }
 
-    private fun showDriveSheet(drives: List<Drive>) {
+    private fun showDriveSheet(found: List<Drive>) {
+        // Systemordner der FRITZ!Box und den Zielordner selbst nicht anbieten
+        val folders = found.filter {
+            !it.name.equals("FRITZ", ignoreCase = true) &&
+                !it.name.equals(TARGET, ignoreCase = true)
+        }
+        val sameFree = found.map { it.free }.distinct().size <= 1
+        val free = found.firstOrNull()?.free ?: -1L
+
+        // Eintrag 0 = direkt in der Freigabe (empfohlen), danach die gefundenen Ordner
+        val paths = listOf("") + folders.map { it.name }
+        val titles = listOf("Direkt in ${s.share}") + folders.map { it.name }
+        val infos = listOf("Empfohlen · Ordner $TARGET hier anlegen") + folders.map {
+            if (!sameFree && it.free >= 0) "Speicher · ${Ui.formatBytes(it.free)} frei" else "Ordner"
+        }
+
         val sheet = BottomSheetDialog(this)
         val view = LayoutInflater.from(this).inflate(R.layout.sheet_drives, null)
         view.findViewById<TextView>(R.id.tvSheetSub).text =
-            "Gefunden an deiner FRITZ!Box. Der Ordner Handy-Fotos-Videos wird darauf angelegt."
+            "Gefunden an deiner FRITZ!Box" +
+                (if (sameFree && free >= 0) " · ${Ui.formatBytes(free)} frei" else "") +
+                ". Der Ordner $TARGET wird dort angelegt."
         view.findViewById<TextView>(R.id.tvLogin).text = "Anmeldung als „${s.user}“ erfolgreich"
 
         val list = view.findViewById<LinearLayout>(R.id.driveList)
         val previousFolder = etFolder.text.toString()
+        val currentParent = s.folder.trim('/').let {
+            if (it.contains('/')) it.substringBeforeLast('/') else ""
+        }
+        var selected = paths.indexOfFirst { it.equals(currentParent, ignoreCase = true) }.let { if (it < 0) 0 else it }
+        val rows = ArrayList<LinearLayout>()
+
         fun apply(i: Int) {
             // Ordner sofort übernehmen – nicht erst beim Knopf „Auswählen“
-            etFolder.setText("${drives[i].name}/Handy-Fotos-Videos")
+            etFolder.setText(if (paths[i].isEmpty()) TARGET else "${paths[i]}/$TARGET")
             saveFields()
         }
-        val current = s.folder.substringBefore('/')
-        var selected = drives.indexOfFirst { it.name == current }.let { if (it < 0) 0 else it }
-        val rows = ArrayList<LinearLayout>()
 
         fun render() {
             rows.forEachIndexed { i, row ->
@@ -151,16 +174,28 @@ class SetupActivity : AppCompatActivity() {
             }
         }
 
-        drives.forEachIndexed { i, d ->
+        paths.indices.forEach { i ->
             val row = LayoutInflater.from(this).inflate(R.layout.item_drive, list, false) as LinearLayout
-            row.findViewById<TextView>(R.id.tvDriveName).text = d.name
-            row.findViewById<TextView>(R.id.tvDriveInfo).text =
-                if (d.free >= 0) "Speicher · ${Ui.formatBytes(d.free)} frei" else "Speicher an der FRITZ!Box"
+            row.findViewById<TextView>(R.id.tvDriveName).text = titles[i]
+            row.findViewById<TextView>(R.id.tvDriveInfo).text = infos[i]
+            row.findViewById<ImageView>(R.id.ivDriveIcon)
+                .setImageResource(if (i == 0) R.drawable.ic_drive else R.drawable.ic_folder)
             row.setOnClickListener { selected = i; render(); apply(i) }
             list.addView(row)
             rows.add(row)
         }
         render()
+
+        // Lange Listen scrollen in einem begrenzten Bereich – die Knöpfe bleiben sichtbar
+        val maxListHeight = (resources.displayMetrics.heightPixels * 0.42f).toInt()
+        val listScroll = view.findViewById<NestedScrollView>(R.id.listScroll)
+        list.measure(
+            View.MeasureSpec.makeMeasureSpec(resources.displayMetrics.widthPixels, View.MeasureSpec.AT_MOST),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        if (list.measuredHeight > maxListHeight) {
+            listScroll.layoutParams = listScroll.layoutParams.apply { height = maxListHeight }
+        }
 
         view.findViewById<MaterialButton>(R.id.btnCancel).setOnClickListener {
             etFolder.setText(previousFolder)
