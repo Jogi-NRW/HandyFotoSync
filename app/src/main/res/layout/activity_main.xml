@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            style="@style/Heading"
+            android:text="FRITZ!Box-Verbindung" />
+
+        <TextView style="@style/Label" android:text="Adresse der FRITZ!Box" />
+        <EditText
+            android:id="@+id/etHost"
+            style="@style/Field"
+            android:hint="fritz.box"
+            android:inputType="textUri" />
+
+        <TextView style="@style/Label" android:text="Freigabename (Standard: FRITZ.NAS)" />
+        <EditText
+            android:id="@+id/etShare"
+            style="@style/Field"
+            android:hint="FRITZ.NAS"
+            android:inputType="text" />
+
+        <TextView style="@style/Label" android:text="FRITZ!Box-Benutzer" />
+        <EditText
+            android:id="@+id/etUser"
+            style="@style/Field"
+            android:hint="z. B. handy"
+            android:inputType="text" />
+
+        <TextView style="@style/Label" android:text="Kennwort" />
+        <EditText
+            android:id="@+id/etPassword"
+            style="@style/Field"
+            android:inputType="textPassword" />
+
+        <TextView style="@style/Label" android:text="Zielordner auf der Festplatte" />
+        <EditText
+            android:id="@+id/etFolder"
+            style="@style/Field"
+            android:hint="Festplatte/Handy-Fotos-Videos"
+            android:inputType="text" />
+
+        <Button
+            android:id="@+id/btnDrives"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Festplatte auswählen …" />
+
+        <Button
+            android:id="@+id/btnTest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Speichern &amp; Verbindung testen" />
+
+        <TextView
+            style="@style/Heading"
+            android:layout_marginTop="24dp"
+            android:text="Was soll übertragen werden?" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swVideos"
+            style="@style/SwitchRow"
+            android:text="Videos auch übertragen" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swCamera"
+            style="@style/SwitchRow"
+            android:text="Nur Kamera-Fotos (ohne Screenshots, WhatsApp usw.)" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/swAuto"
+            style="@style/SwitchRow"
+            android:text="Automatisch übertragen, sobald ich im WLAN bin" />
+
+        <TextView
+            android:id="@+id/tvPerms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="#C62828"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnPerms"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Berechtigungen erteilen"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnSync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Jetzt übertragen" />
+
+        <TextView
+            style="@style/Heading"
+            android:layout_marginTop="24dp"
+            android:text="Status" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textIsSelectable="true"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="monospace"
+            android:textIsSelectable="true"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btnReset"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Merkliste zurücksetzen" />
+    </LinearLayout>
+</ScrollView>
